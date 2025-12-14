@@ -1,0 +1,176 @@
+# ====================
+# Operating System
+# ====================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ====================
+# IDEs and Editors
+# ====================
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ====================
+# Backend (Gradle/Java)
+# ====================
+# Build directories
+backend/build/
+backend/out/
+backend/target/
+backend/.gradle/
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Log files
+*.log
+
+# Package files
+*.zip
+*.tar.gz
+*.rar
+
+# ====================
+# Mobile App (React Native/Expo)
+# ====================
+# Dependencies
+mobile-app/node_modules/
+node_modules/
+
+# Expo
+mobile-app/.expo/
+mobile-app/.expo-shared/
+mobile-app/dist/
+
+# Build artifacts
+mobile-app/build/
+mobile-app/android/app/build/
+mobile-app/ios/build/
+
+# Metro bundler
+mobile-app/.metro-health-check*
+
+# Debug
+mobile-app/npm-debug.*
+mobile-app/yarn-debug.*
+mobile-app/yarn-error.*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OSX
+mobile-app/.DS_Store
+
+# Watchman
+.watchmanconfig
+
+# Xcode (iOS)
+mobile-app/ios/Pods/
+mobile-app/ios/**/*.xcworkspace
+!mobile-app/ios/**/*.xcworkspace/contents.xcworkspacedata
+mobile-app/ios/**/*.xcuserstate
+mobile-app/ios/**/*.xcuserdatad/
+
+# Android
+mobile-app/android/.gradle/
+mobile-app/android/app/build/
+mobile-app/android/build/
+mobile-app/android/local.properties
+mobile-app/android/**/*.iml
+*.apk
+*.aab
+
+# Web
+mobile-app/web-build/
+
+# ====================
+# General
+# ====================
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
