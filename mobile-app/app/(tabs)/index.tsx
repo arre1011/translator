@@ -1,98 +1,228 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { useTranslationSession, Speaker } from '@/hooks/use-translation-session';
+import { SpeakerPanel } from '@/components/translator/SpeakerPanel';
+import { DEFAULT_SOURCE_LANG, DEFAULT_TARGET_LANG } from '@/constants/languages';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+// Generate a simple user ID for MVP (in production, use auth)
+const generateUserId = () => `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-export default function HomeScreen() {
+export default function TranslatorScreen() {
+  const backgroundColor = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+
+  const [languageA, setLanguageA] = useState(DEFAULT_SOURCE_LANG);
+  const [languageB, setLanguageB] = useState(DEFAULT_TARGET_LANG);
+  const [userId] = useState(generateUserId);
+
+  const {
+    isConnected,
+    isConnecting,
+    activeSpeaker,
+    transcripts,
+    translations,
+    error,
+    startSession,
+    endSession,
+    toggleMicrophone,
+    clearError,
+  } = useTranslationSession();
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Error', error, [{ text: 'OK', onPress: clearError }]);
+    }
+  }, [error, clearError]);
+
+  const handleMicPress = useCallback(async (speaker: Speaker) => {
+    if (!isConnected && !isConnecting) {
+      // Start a new session
+      const sourceLang = speaker === 'A' ? languageA : languageB;
+      const targetLang = speaker === 'A' ? languageB : languageA;
+      await startSession(userId, sourceLang, targetLang);
+    }
+
+    // Toggle microphone for this speaker
+    toggleMicrophone(speaker);
+  }, [isConnected, isConnecting, languageA, languageB, userId, startSession, toggleMicrophone]);
+
+  const handleEndSession = useCallback(() => {
+    Alert.alert(
+      'End Session',
+      'Are you sure you want to end the translation session?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'End', style: 'destructive', onPress: endSession },
+      ]
+    );
+  }, [endSession]);
+
+  const handleSwapLanguages = useCallback(() => {
+    if (isConnected) {
+      Alert.alert('Cannot Swap', 'Please end the current session before changing languages.');
+      return;
+    }
+    setLanguageA(languageB);
+    setLanguageB(languageA);
+  }, [isConnected, languageA, languageB]);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Hello Maus</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={[styles.container, { backgroundColor }]}>
+      <StatusBar style="auto" />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: textColor }]}>Face-to-Face Translator</Text>
+        <View style={styles.headerControls}>
+          {isConnected && (
+            <TouchableOpacity onPress={handleEndSession} style={styles.endButton}>
+              <Ionicons name="stop-circle" size={24} color="#FF3B30" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Connection Status */}
+      <View style={styles.statusBar}>
+        {isConnecting ? (
+          <View style={styles.statusContent}>
+            <ActivityIndicator size="small" color="#007AFF" />
+            <Text style={[styles.statusText, { color: textColor }]}>Connecting...</Text>
+          </View>
+        ) : isConnected ? (
+          <View style={styles.statusContent}>
+            <View style={styles.statusDot} />
+            <Text style={[styles.statusText, { color: textColor }]}>Connected</Text>
+          </View>
+        ) : (
+          <Text style={[styles.statusHint, { color: textColor }]}>
+            Tap a microphone to start translating
+          </Text>
+        )}
+      </View>
+
+      {/* Speaker A - Top Half */}
+      <SpeakerPanel
+        position="top"
+        language={languageA}
+        onLanguageChange={setLanguageA}
+        excludeLanguage={languageB}
+        onMicPress={() => handleMicPress('A')}
+        isRecording={activeSpeaker === 'A'}
+        isConnected={isConnected || isConnecting}
+        transcript={transcripts.A}
+        translation={translations.A}
+      />
+
+      {/* Divider with Swap Button */}
+      <View style={styles.divider}>
+        <View style={styles.dividerLine} />
+        <TouchableOpacity
+          style={[styles.swapButton, isConnected && styles.swapButtonDisabled]}
+          onPress={handleSwapLanguages}
+          disabled={isConnected}
+        >
+          <Ionicons
+            name="swap-vertical"
+            size={24}
+            color={isConnected ? '#888' : '#007AFF'}
+          />
+        </TouchableOpacity>
+        <View style={styles.dividerLine} />
+      </View>
+
+      {/* Speaker B - Bottom Half (rotated for face-to-face) */}
+      <SpeakerPanel
+        position="bottom"
+        language={languageB}
+        onLanguageChange={setLanguageB}
+        excludeLanguage={languageA}
+        onMicPress={() => handleMicPress('B')}
+        isRecording={activeSpeaker === 'B'}
+        isConnected={isConnected || isConnecting}
+        transcript={transcripts.B}
+        translation={translations.B}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  headerControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  endButton: {
+    padding: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  statusBar: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  statusContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#34C759',
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  statusHint: {
+    fontSize: 14,
+    opacity: 0.6,
+    fontStyle: 'italic',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginVertical: 4,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  swapButton: {
+    padding: 12,
+    marginHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+  },
+  swapButtonDisabled: {
+    opacity: 0.5,
   },
 });
